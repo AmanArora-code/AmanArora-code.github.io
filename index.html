@@ -72,6 +72,11 @@ button.btn{font:inherit;font-weight:700;font-size:15px;cursor:pointer}
 .mail .done{color:var(--cyan);font-size:14px;min-height:20px;margin:10px 0 0;text-align:center}
 .hint{position:absolute;right:24px;bottom:7vh;color:var(--mute);font-size:13px;max-width:22ch;text-align:right}
 @media (max-width:760px){.hint{display:none}.hero{min-height:680px}}
+.flow-fallback{position:absolute;right:4%;top:22%;display:flex;flex-direction:column;align-items:flex-end;gap:0;
+  background:radial-gradient(circle at 70% 40%,rgba(62,240,255,.08),transparent 60%)}
+.flow-fallback span{font-weight:700;font-size:15px;padding:8px 16px;border-radius:999px;border:1px solid var(--cyan);background:rgba(12,16,48,.8);box-shadow:0 0 18px rgba(62,240,255,.25)}
+.flow-fallback i{display:block;width:2px;height:22px;margin-right:40px;background:linear-gradient(var(--cyan),var(--violet))}
+@media (max-width:760px){.flow-fallback{top:12%;right:6%;transform:scale(.85);transform-origin:top right}}
 #tip{position:absolute;z-index:5;max-width:280px;padding:14px 16px;border-radius:14px;background:rgba(12,16,48,.95);border:1px solid var(--cyan);
   font-size:14px;line-height:1.5;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 0 30px rgba(62,240,255,.18)}
 #tip b{display:block;font-family:var(--display);font-size:14px;color:var(--cyan);margin-bottom:4px}
@@ -281,7 +286,7 @@ footer{max-width:1180px;margin:0 auto;padding:30px 24px 40px;color:var(--mute);f
           <li>Design and build scalable CRM workflows, relational databases, dashboards and workflow automations on Orgzit's low-code/no-code SaaS platform.</li>
           <li>Turned the S2S Launcher into a complete Lead-to-Payment Launcher, owning architecture, database design and the warehouse, inventory and payment collection modules.</li>
           <li>Built an HVAC operations system for an international client that removed a lot of manual work and saved the team significant time.</li>
-          <li>Designed and delivered a complete business system for Boerger, a Germany-based company.</li>
+          <li>Designed and delivered a complete business system for Bjorger, a Germany-based company.</li>
           <li>Write custom frontend code in HTML, CSS and JavaScript to add features that platform objects can't handle on their own, along with custom PDF solutions.</li>
           <li>Run weekly requirement-gathering meetings with international clients and convert them into CRM solutions, including for HVAC operations.</li>
         </ul>
@@ -409,9 +414,25 @@ footer{max-width:1180px;margin:0 auto;padding:30px 24px 40px;color:var(--mute);f
 
 <footer>Aman Arora, Delhi. Built with Three.js and plain JavaScript.</footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+/* Load Three.js with backup sources, so the 3D scene still appears if one CDN is blocked or slow */
 (function(){
+  const srcs=['https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+              'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js',
+              'https://unpkg.com/three@0.128.0/build/three.min.js'];
+  let i=0, started=false;
+  const start=()=>{ if(!started){ started=true; main(); } };
+  function next(){
+    if (window.THREE || i>=srcs.length) return start();
+    const sc=document.createElement('script'); sc.src=srcs[i++];
+    const t=setTimeout(()=>{ sc.onload=sc.onerror=null; next(); }, 6000);
+    sc.onload=()=>{clearTimeout(t); start();}; sc.onerror=()=>{clearTimeout(t); next();};
+    document.head.appendChild(sc);
+  }
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', next); else next();
+})();
+
+function main(){
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- 3D Lead-to-Payment workflow ---------- */
@@ -429,8 +450,14 @@ footer{max-width:1180px;margin:0 auto;padding:30px 24px 40px;color:var(--mute);f
   ];
   let ok = !!window.THREE;
   let renderer;
-  if (ok){ try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true}); } catch(e){ ok=false; } }
-  if (!ok){ canvas.style.background='radial-gradient(circle at 70% 40%, #1a1f5a, #060816 60%)'; }
+  if (ok){ try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true}); if(!renderer.getContext()) ok=false; } catch(e){ ok=false; } }
+  if (!ok){
+    canvas.style.display='none';
+    const fb=document.createElement('div'); fb.className='flow-fallback'; fb.setAttribute('aria-label','Lead-to-Payment workflow');
+    fb.innerHTML=nodesData.map(n=>'<span title="'+n.text+'">'+n.name+'</span>').join('<i></i>');
+    hero.insertBefore(fb, labelsEl);
+    document.querySelector('.hint').textContent='This is the Lead-to-Payment flow I architected. Hover a step to see what it does.';
+  }
   else {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
     const scene = new THREE.Scene();
@@ -618,7 +645,7 @@ footer{max-width:1180px;margin:0 auto;padding:30px 24px 40px;color:var(--mute);f
     }
   }),{threshold:.15});
   document.querySelectorAll('.reveal').forEach(s=>io.observe(s));
-})();
+}
 </script>
 </body>
 </html>
